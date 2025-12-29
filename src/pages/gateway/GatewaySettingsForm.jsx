@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Key, Lock, DollarSign } from 'lucide-react';
+import { CreditCard, Key, Lock, DollarSign, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../api';
 import ModulePage from '../../components/common/ModulePage';
