@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Server, Key, Send } from 'lucide-react';
+import axios from 'axios';
+import { API_BASE_URL } from '../../api';
 
 const EmailSettingsForm = () => {
     const [smtpHost, setSmtpHost] = useState('');
@@ -14,28 +16,58 @@ const EmailSettingsForm = () => {
     const [fromEmail, setFromEmail] = useState('');
     const [testEmailRecipient, setTestEmailRecipient] = useState('');
 
-    const handleSaveSettings = () => {
-        // This is where you would typically send the settings to your backend
-        console.log('Saving SMTP Settings:', {
-            smtpHost,
-            smtpPort,
-            username,
-            password, // In a real app, handle securely (e.g., don't log raw password)
-            encryption,
-            fromName,
-            fromEmail,
-        });
-        alert('SMTP settings saved! (Backend integration required)');
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/settings`);
+                const smtpSettings = response.data.smtp;
+                if (smtpSettings) {
+                    setSmtpHost(smtpSettings.host || '');
+                    setSmtpPort(smtpSettings.port || '');
+                    setUsername(smtpSettings.user || '');
+                    setPassword(smtpSettings.pass || ''); // Note: Passwords should ideally not be sent back to frontend
+                    setEncryption(smtpSettings.encryption || 'SSL');
+                    setFromName(smtpSettings.fromName || '');
+                    setFromEmail(smtpSettings.fromEmail || '');
+                }
+            } catch (error) {
+                console.error('Failed to fetch SMTP settings:', error);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSaveSettings = async () => {
+        try {
+            const smtpData = {
+                host: smtpHost,
+                port: smtpPort,
+                user: username,
+                pass: password,
+                encryption: encryption,
+                fromName: fromName,
+                fromEmail: fromEmail,
+            };
+            await axios.put(`${API_BASE_URL}/settings`, { smtp: smtpData });
+            alert('SMTP settings saved successfully!');
+        } catch (error) {
+            console.error('Failed to save SMTP settings:', error);
+            alert('Failed to save SMTP settings. Please check console for details.');
+        }
     };
 
-    const handleSendTestEmail = () => {
-        // This is where you would trigger a backend endpoint to send a test email
+    const handleSendTestEmail = async () => {
         if (!testEmailRecipient) {
             alert('Please enter a recipient email for the test.');
             return;
         }
-        console.log('Sending test email to:', testEmailRecipient, 'with current settings.');
-        alert('Test email initiated! (Backend integration required)');
+        try {
+            await axios.post(`${API_BASE_URL}/settings/test-smtp`, { recipientEmail: testEmailRecipient });
+            alert('Test email sent successfully!');
+        } catch (error) {
+            console.error('Failed to send test email:', error);
+            alert(`Failed to send test email: ${error.response?.data?.message || error.message}`);
+        }
     };
 
     return (

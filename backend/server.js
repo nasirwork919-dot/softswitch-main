@@ -43,7 +43,14 @@ app.put("/api/settings", async (req, res) => {
     if (!settings) {
       settings = await Settings.create(req.body);
     } else {
-      await settings.update(req.body);
+      // Merge incoming changes with existing settings for JSON fields
+      const updatedData = {
+        theme: req.body.theme ? { ...settings.theme, ...req.body.theme } : settings.theme,
+        smtp: req.body.smtp ? { ...settings.smtp, ...req.body.smtp } : settings.smtp,
+        gateway: req.body.gateway ? { ...settings.gateway, ...req.body.gateway } : settings.gateway,
+        // Add other top-level settings here if they exist and need merging
+      };
+      await settings.update(updatedData);
     }
     res.json(settings);
   } catch (err) {
